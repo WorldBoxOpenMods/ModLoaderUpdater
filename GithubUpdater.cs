@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace NeoModLoader.AutoUpdate;
 
@@ -17,7 +19,8 @@ public class GithubUpdater : AUpdater
         var left_idx = release_info.name.IndexOf('(');
         var right_idx = release_info.name.IndexOf(')');
         online_version = new Version(release_info.name.Substring(left_idx + 1, right_idx - left_idx - 1));
-        return online_version > WorldBoxMod.CurrentVersion;
+        Debug.Log("Github latest version: " + online_version);
+        return online_version <= WorldBoxMod.CurrentVersion;
     }
 
     public override bool IsAvailable()
@@ -48,6 +51,15 @@ public class GithubUpdater : AUpdater
             if (!string.IsNullOrEmpty(downloaded))
             {
                 if (UpdateHelper.CheckValid(downloaded)) return UpdateHelper.TryReplaceFile(Paths.NMLPath, downloaded);
+
+                try
+                {
+                    File.Delete(downloaded);
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
 
                 return UpdateResult.Fail;
             }

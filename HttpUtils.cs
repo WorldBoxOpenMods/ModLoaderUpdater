@@ -1,7 +1,11 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace NeoModLoader.AutoUpdate;
 
@@ -10,6 +14,85 @@ namespace NeoModLoader.AutoUpdate;
 /// </summary>
 public static class HttpUtils
 {
+    private static LoadingScreen loading_screen;
+
+    public static void DownloadFile(string url, string file_path)
+    {
+        var client = new HttpClient();
+        using HttpResponseMessage response = client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead)
+                                                   .ConfigureAwait(false)
+                                                   .GetAwaiter().GetResult();
+        try
+        {
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException e)
+        {
+            return;
+        }
+
+        HttpContent content = response.Content;
+        if (content == null) throw new Exception("No content in response");
+
+        HttpContentHeaders headers = content.Headers;
+        var content_length = headers.ContentLength;
+        using var response_stream = content.ReadAsStreamAsync();
+
+        var dir = Path.GetDirectoryName(file_path);
+        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+        using var file_stream = new FileStream(file_path, FileMode.Create);
+
+        var buffer = new byte[4096];
+        int bytesRead;
+
+        ulong total_bytes = 0;
+        ulong received_bytes = 0;
+        if (headers.ContentLength.HasValue) total_bytes = (ulong)content_length.Value;
+
+        log_progress(received_bytes, total_bytes);
+
+        var last_time = DateTime.Now.Second;
+        while (true)
+        {
+            bytesRead = response_stream.Result.Read(buffer, 0, buffer.Length);
+
+            var now = DateTime.Now.Second;
+            if (bytesRead == 0)
+            {
+                if (now - last_time > 3) break;
+
+                continue;
+            }
+
+            file_stream.Write(buffer, 0, bytesRead);
+
+            received_bytes += (ulong)bytesRead;
+            now = DateTime.Now.Second;
+            if (now != last_time)
+            {
+                log_progress(received_bytes, total_bytes);
+                last_time = now;
+            }
+        }
+
+        void log_progress(ulong received, ulong total)
+        {
+            if (loading_screen == null)
+            {
+                loading_screen = Object.FindObjectOfType<LoadingScreen>();
+                if (loading_screen == null) Debug.Log("Failed to find loading screen.");
+            }
+
+            var msg = $"Downloading {Path.GetFileName(file_path)}: {received}/{total} bytes";
+            if (loading_screen != null)
+            {
+                loading_screen.loadingHelperText.text = msg;
+                Debug.Log(msg);
+            }
+        }
+    }
+
     public static string Request(string url, string param = "", string method = "get")
     {
         ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; //TLS1.2=3702

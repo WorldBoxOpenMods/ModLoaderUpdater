@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace NeoModLoader.AutoUpdate;
 
 public abstract class AUpdater
@@ -15,7 +17,11 @@ public abstract class AUpdater
     /// <returns>Whether update to date now</returns>
     public bool Update()
     {
-        if (!IsAvailable()) return false;
+        if (!IsAvailable())
+        {
+            Debug.Log($"{GetType().Name} is not available");
+            return false;
+        }
 
         if (CheckUpdate()) return true;
 

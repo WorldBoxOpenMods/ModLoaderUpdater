@@ -58,7 +58,7 @@ public static class UpdateHelper
             using var client = new WebClient();
             try
             {
-                client.DownloadFile(download_url, download_path);
+                HttpUtils.DownloadFile(download_url, download_path);
             }
             catch (Exception)
             {

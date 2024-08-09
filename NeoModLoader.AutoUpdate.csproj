@@ -19,6 +19,7 @@
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -28,6 +29,7 @@
         <DefineConstants>TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -37,8 +39,14 @@
         <Reference Include="Assembly-CSharp">
             <HintPath>assembly-dependencies\Assembly-CSharp-Publicized.dll</HintPath>
         </Reference>
+        <Reference Include="System.Net.Http">
+            <HintPath>..\NeoModLoader\assembly-dependencies\System.Net.Http.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine">
             <HintPath>assembly-dependencies\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>assembly-dependencies\UnityEngine.UI.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
             <HintPath>assembly-dependencies\UnityEngine.CoreModule.dll</HintPath>

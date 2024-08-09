@@ -11,7 +11,7 @@ public class WorldBoxMod : MonoBehaviour
 
     public void Awake()
     {
-        Debug.Log("Begin to check update for NML");
+        Debug.Log($"Begin to check update for NML. Current version: {CurrentVersion}");
         var path1 = Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader.dll");
         var path2 = Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader_memload.dll");
         var both_existed = File.Exists(path1) && File.Exists(path2);
@@ -32,28 +32,37 @@ public class WorldBoxMod : MonoBehaviour
         else
             Paths.NMLPath = path1;
 
-        CurrentVersion = AssemblyName.GetAssemblyName(Paths.NMLPath).Version;
-
+        UpdateVersion();
+/*
         if (new WorkshopUpdater().Update())
         {
             UpdateVersion();
+            Debug.Log($"Updated to latest version: {CurrentVersion} from Workshop");
             return;
         }
-
+*/
         if (new GithubUpdater().Update())
         {
             UpdateVersion();
+            Debug.Log($"Updated to latest version: {CurrentVersion} from Github");
             return;
         }
 
         if (new GiteeUpdater().Update())
         {
             UpdateVersion();
+            Debug.Log($"Updated to latest version: {CurrentVersion} from Gitee");
+            return;
         }
+
+        Debug.Log($"No update available. Current version: {CurrentVersion}");
     }
 
     internal void UpdateVersion()
     {
-        CurrentVersion = AssemblyName.GetAssemblyName(Paths.NMLPath).Version;
+        if (File.Exists(Paths.NMLPath))
+            CurrentVersion = AssemblyName.GetAssemblyName(Paths.NMLPath).Version;
+        else
+            CurrentVersion = new Version(0, 0, 0, 0);
     }
 }
