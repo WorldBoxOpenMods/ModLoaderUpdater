@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -28,7 +29,7 @@ public class GiteeUpdater : AUpdater
         return LocalizedTextManager.instance.language == "cz";
     }
 
-    public override UpdateResult DownloadAndReplace()
+    public override async Task<UpdateResult> DownloadAndReplace()
     {
         if (release_info.assets.Length == 0) return UpdateResult.Fail;
 
@@ -39,15 +40,17 @@ public class GiteeUpdater : AUpdater
         if (!string.IsNullOrEmpty(pdb_asset?.browser_download_url))
         {
             var downloaded =
-                UpdateHelper.DownloadFile(pdb_asset.browser_download_url, download_postfix, "NeoModLoader.pdb");
+                await UpdateHelper.DownloadFile(pdb_asset.browser_download_url, download_postfix, "NeoModLoader.pdb");
             if (!string.IsNullOrEmpty(downloaded)) UpdateHelper.TryReplaceFile(Paths.NMLPdbPath, downloaded);
         }
 
         ReleaseAsset dll_asset = release_info.assets.FirstOrDefault(x => x.name.EndsWith(".dll"));
         if (!string.IsNullOrEmpty(dll_asset?.browser_download_url))
         {
+            var NML_taken = !UpdateHelper.BackupFile(Paths.NMLPath);
             var downloaded =
-                UpdateHelper.DownloadFile(dll_asset.browser_download_url, download_postfix, "NeoModLoader.dll");
+                await UpdateHelper.DownloadFile(dll_asset.browser_download_url, download_postfix, "NeoModLoader.dll");
+            if (NML_taken) return UpdateResult.IsTaken;
             if (!string.IsNullOrEmpty(downloaded))
             {
                 if (UpdateHelper.CheckValid(downloaded)) return UpdateHelper.TryReplaceFile(Paths.NMLPath, downloaded);
@@ -60,6 +63,9 @@ public class GiteeUpdater : AUpdater
                 {
                     // ignored
                 }
+
+                UpdateHelper.RestoreFile(Paths.NMLPath);
+                UpdateHelper.LoadNMLManually();
 
                 return UpdateResult.Fail;
             }

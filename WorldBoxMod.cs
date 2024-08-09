@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
@@ -7,10 +8,12 @@ namespace NeoModLoader.AutoUpdate;
 
 public class WorldBoxMod : MonoBehaviour
 {
-    public static Version CurrentVersion { get; private set; }
+    public static WorldBoxMod I              { get; private set; }
+    public static Version     CurrentVersion { get; private set; }
 
-    public void Awake()
+    public async void Awake()
     {
+        I = this;
         Debug.Log($"Begin to check update for NML. Current version: {CurrentVersion}");
         var path1 = Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader.dll");
         var path2 = Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader_memload.dll");
@@ -19,11 +22,11 @@ public class WorldBoxMod : MonoBehaviour
         {
             try
             {
-                File.Delete(Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader_memload.dll"));
+                File.Delete(path2);
             }
             catch (Exception e)
             {
-                return;
+                File.Delete(path1);
             }
         }
 
@@ -33,27 +36,26 @@ public class WorldBoxMod : MonoBehaviour
             Paths.NMLPath = path1;
 
         UpdateVersion();
-/*
-        if (new WorkshopUpdater().Update())
+
+        var updaters = new List<AUpdater>
         {
-            UpdateVersion();
-            Debug.Log($"Updated to latest version: {CurrentVersion} from Workshop");
-            return;
-        }
-*/
-        if (new GithubUpdater().Update())
+            new WorkshopUpdater(),
+            new GithubUpdater(), new GiteeUpdater()
+        };
+        foreach (AUpdater updater in updaters)
         {
-            UpdateVersion();
-            Debug.Log($"Updated to latest version: {CurrentVersion} from Github");
-            return;
+            var res = await updater.Update();
+            if (res)
+            {
+                UpdateVersion();
+                Debug.Log($"Updated to latest version: {CurrentVersion} from {updater.GetType().Name}");
+                if (!ModLoader.getModsLoaded().Contains("NeoModLoader")) UpdateHelper.LoadNMLManually();
+
+                return;
+            }
         }
 
-        if (new GiteeUpdater().Update())
-        {
-            UpdateVersion();
-            Debug.Log($"Updated to latest version: {CurrentVersion} from Gitee");
-            return;
-        }
+        if (!ModLoader.getModsLoaded().Contains("NeoModLoader")) UpdateHelper.LoadNMLManually();
 
         Debug.Log($"No update available. Current version: {CurrentVersion}");
     }

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace NeoModLoader.AutoUpdate;
@@ -9,13 +10,13 @@ public abstract class AUpdater
     /// <returns>Whether update to date now</returns>
     public abstract bool CheckUpdate();
 
-    public abstract bool         IsAvailable();
-    public abstract UpdateResult DownloadAndReplace();
+    public abstract bool               IsAvailable();
+    public abstract Task<UpdateResult> DownloadAndReplace();
 
     /// <summary>
     /// </summary>
     /// <returns>Whether update to date now</returns>
-    public bool Update()
+    public async Task<bool> Update()
     {
         if (!IsAvailable())
         {
@@ -25,7 +26,7 @@ public abstract class AUpdater
 
         if (CheckUpdate()) return true;
 
-        UpdateResult res = DownloadAndReplace();
+        UpdateResult res = await DownloadAndReplace();
         switch (res)
         {
             case UpdateResult.IsTaken:

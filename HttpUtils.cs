@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -16,7 +17,7 @@ public static class HttpUtils
 {
     private static LoadingScreen loading_screen;
 
-    public static void DownloadFile(string url, string file_path)
+    public static async Task DownloadFile(string url, string file_path)
     {
         var client = new HttpClient();
         using HttpResponseMessage response = client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead)
@@ -55,7 +56,7 @@ public static class HttpUtils
         var last_time = DateTime.Now.Second;
         while (true)
         {
-            bytesRead = response_stream.Result.Read(buffer, 0, buffer.Length);
+            bytesRead = await response_stream.Result.ReadAsync(buffer, 0, buffer.Length);
 
             var now = DateTime.Now.Second;
             if (bytesRead == 0)
@@ -65,7 +66,7 @@ public static class HttpUtils
                 continue;
             }
 
-            file_stream.Write(buffer, 0, bytesRead);
+            await file_stream.WriteAsync(buffer, 0, bytesRead);
 
             received_bytes += (ulong)bytesRead;
             now = DateTime.Now.Second;
@@ -90,6 +91,8 @@ public static class HttpUtils
                 loading_screen.loadingHelperText.text = msg;
                 Debug.Log(msg);
             }
+
+            if (loading_screen?.inGameScreen ?? false) WorldTip.showNow(msg, false, "top");
         }
     }
 
