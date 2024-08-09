@@ -34,6 +34,9 @@
         <Reference Include="Newtonsoft.Json">
           <HintPath>assembly-dependencies\Newtonsoft.Json.dll</HintPath>
         </Reference>
+        <Reference Include="Assembly-CSharp">
+            <HintPath>assembly-dependencies\Assembly-CSharp-Publicized.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine">
             <HintPath>assembly-dependencies\UnityEngine.dll</HintPath>
         </Reference>
