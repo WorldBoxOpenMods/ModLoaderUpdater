@@ -18,6 +18,7 @@ public class WorldBoxMod : MonoBehaviour
         var path1 = Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader.dll");
         var path2 = Path.Combine(Application.streamingAssetsPath, "Mods", "NeoModLoader_memload.dll");
         var both_existed = File.Exists(path1) && File.Exists(path2);
+        var any_existed = File.Exists(path1) || File.Exists(path2);
         if (both_existed)
         {
             try
@@ -42,20 +43,31 @@ public class WorldBoxMod : MonoBehaviour
             new WorkshopUpdater(),
             new GithubUpdater(), new GiteeUpdater()
         };
+        var async = false;
         foreach (AUpdater updater in updaters)
         {
-            var res = await updater.Update();
-            if (res)
+            var awaiter_res = updater.Update().GetAwaiter();
+            var no_async = awaiter_res.IsCompleted;
+            async |= !no_async;
+            /* Several situations:
+             * 1. Mod loaded: NeoModLoader->AutoUpdate, no need to load NML manually
+             * 2. Mod loaded: AutoUpdate->NeoModLoader, use cached download file: old file is deleted and restored in a single frame(no async). no need to load NML manually
+             * 3. Mod loaded: AutoUpdate->NeoModLoader, download file: old file is deleted, start downloading new file, replace successfully(async). NML is loaded already.
+             * 4. Mod loaded: AutoUpdate->NeoModLoader, download file: old file is deleted, start downloading new file, replace failed and restore old file(async). NML is not existed so that it should be loaded manually.
+             * 5. Mod loaded: AutoUpdate->NeoModLoader, NML is not existed so that it should be loaded manually.
+             */
+            if (awaiter_res.GetResult())
             {
                 UpdateVersion();
                 Debug.Log($"Updated to latest version: {CurrentVersion} from {updater.GetType().Name}");
-                if (!ModLoader.getModsLoaded().Contains("NeoModLoader")) UpdateHelper.LoadNMLManually();
+                if ((!no_async && !ModLoader.getModsLoaded().Contains("NeoModLoader")) || !any_existed)
+                    UpdateHelper.LoadNMLManually();
 
                 return;
             }
         }
 
-        if (!ModLoader.getModsLoaded().Contains("NeoModLoader")) UpdateHelper.LoadNMLManually();
+        if (async && !ModLoader.getModsLoaded().Contains("NeoModLoader")) UpdateHelper.LoadNMLManually();
 
         Debug.Log($"No update available. Current version: {CurrentVersion}");
     }
