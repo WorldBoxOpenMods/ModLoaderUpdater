@@ -40,13 +40,14 @@ public class WorldBoxMod : MonoBehaviour
 
         var updaters = new List<AUpdater>
         {
-            new WorkshopUpdater(),
-            new GithubUpdater(), new GiteeUpdater()
+            //new WorkshopUpdater(),
+            //new GithubUpdater(),
+            new GiteeUpdater()
         };
         var async = false;
         foreach (AUpdater updater in updaters)
         {
-            var awaiter_res = updater.Update().GetAwaiter();
+            var awaiter_res = updater.Update();
             var no_async = awaiter_res.IsCompleted;
             async |= !no_async;
             /* Several situations:
@@ -56,7 +57,7 @@ public class WorldBoxMod : MonoBehaviour
              * 4. Mod loaded: AutoUpdate->NeoModLoader, download file: old file is deleted, start downloading new file, replace failed and restore old file(async). NML is not existed so that it should be loaded manually.
              * 5. Mod loaded: AutoUpdate->NeoModLoader, NML is not existed so that it should be loaded manually.
              */
-            if (awaiter_res.GetResult())
+            if (await awaiter_res)
             {
                 UpdateVersion();
                 Debug.Log($"Updated to latest version: {CurrentVersion} from {updater.GetType().Name}");

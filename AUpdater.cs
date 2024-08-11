@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -24,19 +25,38 @@ public abstract class AUpdater
             return false;
         }
 
-        if (CheckUpdate()) return true;
-
-        UpdateResult res = await DownloadAndReplace();
-        switch (res)
+        try
         {
-            case UpdateResult.IsTaken:
-                return true;
-            case UpdateResult.Success:
-                return true;
-            case UpdateResult.NoNeedUpdate:
-                return true;
-            case UpdateResult.Fail:
-                return false;
+            if (CheckUpdate()) return true;
+        }
+        catch (Exception e)
+        {
+            Debug.Log($"{GetType().Name} failed to check update. The reason is below:");
+            Debug.Log($"{e.Message}");
+            Debug.Log(e.StackTrace);
+            return false;
+        }
+
+        try
+        {
+            UpdateResult res = await DownloadAndReplace();
+            switch (res)
+            {
+                case UpdateResult.IsTaken:
+                    return true;
+                case UpdateResult.Success:
+                    return true;
+                case UpdateResult.NoNeedUpdate:
+                    return true;
+                case UpdateResult.Fail:
+                    return false;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.Log($"{GetType().Name} failed to download and replace. The reason is below:");
+            Debug.Log($"{e.Message}");
+            Debug.Log(e.StackTrace);
         }
 
         return false;
