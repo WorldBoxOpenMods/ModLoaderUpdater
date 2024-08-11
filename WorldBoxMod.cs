@@ -40,8 +40,8 @@ public class WorldBoxMod : MonoBehaviour
 
         var updaters = new List<AUpdater>
         {
-            //new WorkshopUpdater(),
-            //new GithubUpdater(),
+            new WorkshopUpdater(),
+            new GithubUpdater(),
             new GiteeUpdater()
         };
         var async = false;
