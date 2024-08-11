@@ -68,8 +68,6 @@ public static class UpdateHelper
     public static UpdateResult TryReplaceFile(string pOldFile, string pNewFile)
     {
         FileInfo old_file = new(pOldFile);
-        FileInfo new_file = new(pNewFile);
-        if (old_file.Exists && old_file.LastWriteTime >= new_file.LastWriteTime) return UpdateResult.NoNeedUpdate;
         try
         {
             if (old_file.Exists)
@@ -94,6 +92,19 @@ public static class UpdateHelper
         catch (Exception)
         {
             return false;
+        }
+    }
+
+    public static Version GetDLLVersion(string file_path)
+    {
+        try
+        {
+            var assembly_name = AssemblyName.GetAssemblyName(file_path);
+            return assembly_name.Version;
+        }
+        catch (Exception)
+        {
+            return new Version(0, 0, 0, 0);
         }
     }
 
